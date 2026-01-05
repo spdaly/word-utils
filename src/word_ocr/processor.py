@@ -20,6 +20,7 @@ class ProcessResult:
     markdown_path: Optional[Path] = None
     images_dir: Optional[Path] = None
     image_count: int = 0
+    total_extracted: int = 0
     error: Optional[str] = None
 
 
@@ -50,6 +51,7 @@ def process_document(
         # Extract images
         extractor = ImageExtractor()
         extracted = extractor.extract(input_path)
+        total_extracted = len(extracted)
 
         # Apply limit if set
         if max_images is not None:
@@ -82,7 +84,8 @@ def process_document(
             success=True,
             markdown_path=result.markdown_path,
             images_dir=result.images_dir if processed else None,
-            image_count=len(processed)
+            image_count=len(processed),
+            total_extracted=total_extracted
         )
 
     except FileNotFoundError as e:
