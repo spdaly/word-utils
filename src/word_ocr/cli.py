@@ -78,11 +78,17 @@ def main(input_pattern: str, output: str, verbose: bool, dry_run: bool, engine: 
         except ValueError as e:
             click.echo(f"Error: {e}", err=True)
             sys.exit(2)
+        except Exception as e:
+            click.echo(f"Unexpected error initializing Gemini OCR engine: {e}", err=True)
+            sys.exit(2)
     elif engine == "gemini-pro":
         try:
             ocr_engine = GeminiOCR(model="gemini-1.5-pro")
         except ValueError as e:
             click.echo(f"Error: {e}", err=True)
+            sys.exit(2)
+        except Exception as e:
+            click.echo(f"Unexpected error initializing Gemini OCR engine (gemini-pro): {e}", err=True)
             sys.exit(2)
 
     # Process files
