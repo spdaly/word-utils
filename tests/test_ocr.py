@@ -80,3 +80,25 @@ class TestGeminiOCR:
 
         engine = GeminiOCR()
         assert engine.api_key == "fallback-key"
+
+    def test_default_model_is_flash(self, monkeypatch, mocker):
+        """Should default to gemini-1.5-flash."""
+        monkeypatch.setenv("GEMINI_API_KEY", "test-key")
+        mocker.patch("google.generativeai.configure")
+        mock_model = mocker.patch("google.generativeai.GenerativeModel")
+
+        engine = GeminiOCR()
+
+        assert engine.model == "gemini-1.5-flash"
+        mock_model.assert_called_once_with("gemini-1.5-flash")
+
+    def test_uses_custom_model(self, monkeypatch, mocker):
+        """Should use specified model."""
+        monkeypatch.setenv("GEMINI_API_KEY", "test-key")
+        mocker.patch("google.generativeai.configure")
+        mock_model = mocker.patch("google.generativeai.GenerativeModel")
+
+        engine = GeminiOCR(model="gemini-1.5-pro")
+
+        assert engine.model == "gemini-1.5-pro"
+        mock_model.assert_called_once_with("gemini-1.5-pro")
