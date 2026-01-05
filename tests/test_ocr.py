@@ -65,8 +65,7 @@ class TestGeminiOCR:
     def test_accepts_gemini_api_key(self, monkeypatch, mocker):
         """Should use GEMINI_API_KEY env var."""
         monkeypatch.setenv("GEMINI_API_KEY", "test-key-123")
-        mocker.patch("google.generativeai.configure")
-        mocker.patch("google.generativeai.GenerativeModel")
+        mocker.patch("google.genai.Client")
 
         engine = GeminiOCR()
         assert engine.api_key == "test-key-123"
@@ -75,8 +74,7 @@ class TestGeminiOCR:
         """Should fall back to GOOGLE_API_KEY."""
         monkeypatch.delenv("GEMINI_API_KEY", raising=False)
         monkeypatch.setenv("GOOGLE_API_KEY", "fallback-key")
-        mocker.patch("google.generativeai.configure")
-        mocker.patch("google.generativeai.GenerativeModel")
+        mocker.patch("google.genai.Client")
 
         engine = GeminiOCR()
         assert engine.api_key == "fallback-key"
@@ -84,56 +82,55 @@ class TestGeminiOCR:
     def test_default_model_is_flash(self, monkeypatch, mocker):
         """Should default to gemini-1.5-flash."""
         monkeypatch.setenv("GEMINI_API_KEY", "test-key")
-        mocker.patch("google.generativeai.configure")
-        mock_model = mocker.patch("google.generativeai.GenerativeModel")
+        mocker.patch("google.genai.Client")
 
         engine = GeminiOCR()
 
         assert engine.model == "gemini-1.5-flash"
-        mock_model.assert_called_once_with("gemini-1.5-flash")
 
     def test_uses_custom_model(self, monkeypatch, mocker):
         """Should use specified model."""
         monkeypatch.setenv("GEMINI_API_KEY", "test-key")
-        mocker.patch("google.generativeai.configure")
-        mock_model = mocker.patch("google.generativeai.GenerativeModel")
+        mocker.patch("google.genai.Client")
 
         engine = GeminiOCR(model="gemini-1.5-pro")
 
         assert engine.model == "gemini-1.5-pro"
-        mock_model.assert_called_once_with("gemini-1.5-pro")
 
     def test_extracts_text_from_pil_image(self, monkeypatch, mocker):
         """Should extract text from PIL Image."""
         monkeypatch.setenv("GEMINI_API_KEY", "test-key")
-        mocker.patch("google.generativeai.configure")
 
         mock_response = mocker.Mock()
         mock_response.text = "Extracted text from image"
+        mock_models = mocker.Mock()
+        mock_models.generate_content.return_value = mock_response
         mock_client = mocker.Mock()
-        mock_client.generate_content.return_value = mock_response
-        mocker.patch("google.generativeai.GenerativeModel", return_value=mock_client)
+        mock_client.models = mock_models
+        mocker.patch("google.genai.Client", return_value=mock_client)
 
         engine = GeminiOCR()
         image = Image.new('RGB', (100, 100), color='white')
         result = engine.extract_text(image)
 
         assert result == "Extracted text from image"
-        mock_client.generate_content.assert_called_once()
-        call_args = mock_client.generate_content.call_args[0][0]
-        assert call_args[0] == GeminiOCR.PROMPT
-        assert call_args[1] == image
+        mock_models.generate_content.assert_called_once()
+        call_kwargs = mock_models.generate_content.call_args[1]
+        assert call_kwargs["model"] == "gemini-1.5-flash"
+        assert call_kwargs["contents"][0] == GeminiOCR.PROMPT
+        assert call_kwargs["contents"][1] == image
 
     def test_extracts_text_from_path(self, monkeypatch, mocker, tmp_path):
         """Should extract text from image path."""
         monkeypatch.setenv("GEMINI_API_KEY", "test-key")
-        mocker.patch("google.generativeai.configure")
 
         mock_response = mocker.Mock()
         mock_response.text = "Text from file"
+        mock_models = mocker.Mock()
+        mock_models.generate_content.return_value = mock_response
         mock_client = mocker.Mock()
-        mock_client.generate_content.return_value = mock_response
-        mocker.patch("google.generativeai.GenerativeModel", return_value=mock_client)
+        mock_client.models = mock_models
+        mocker.patch("google.genai.Client", return_value=mock_client)
 
         # Create test image file
         img_path = tmp_path / "test.png"

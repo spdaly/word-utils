@@ -8,7 +8,7 @@ from typing import Union
 
 from PIL import Image
 import pytesseract
-import google.generativeai as genai
+from google import genai
 
 
 class OCREngine(ABC):
@@ -67,8 +67,7 @@ class GeminiOCR(OCREngine):
             raise ValueError(
                 "Gemini API key not found. Set GEMINI_API_KEY or GOOGLE_API_KEY environment variable."
             )
-        genai.configure(api_key=self.api_key)
-        self.client = genai.GenerativeModel(self.model)
+        self.client = genai.Client(api_key=self.api_key)
 
     def extract_text(self, image: Union[Path, Image.Image]) -> str:
         """Extract text using Gemini vision model.
@@ -82,5 +81,8 @@ class GeminiOCR(OCREngine):
         if isinstance(image, Path):
             image = Image.open(image)
 
-        response = self.client.generate_content([self.PROMPT, image])
+        response = self.client.models.generate_content(
+            model=self.model,
+            contents=[self.PROMPT, image]
+        )
         return response.text
