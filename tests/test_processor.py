@@ -50,6 +50,26 @@ class TestProcessDocument:
         assert result.error is not None
         assert "not found" in result.error.lower()
 
+    def test_max_images_limits_processed_count(self, tmp_path, sample_docx_with_images):
+        """Should process only max_images when limit is set."""
+        from unittest.mock import Mock, patch
+
+        # Mock extractor to return 5 images
+        mock_images = [Mock(image=Mock(), index=i) for i in range(5)]
+
+        with patch('word_ocr.processor.ImageExtractor') as mock_extractor:
+            mock_extractor.return_value.extract.return_value = mock_images
+            with patch('word_ocr.processor.TesseractOCR') as mock_ocr:
+                mock_ocr.return_value.extract_text.return_value = "text"
+
+                result = process_document(
+                    input_path=sample_docx_with_images,
+                    output_dir=tmp_path,
+                    max_images=2
+                )
+
+        assert result.image_count == 2
+
 
 class TestProcessBatch:
     """Test batch document processing."""

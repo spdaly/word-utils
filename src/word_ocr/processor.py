@@ -26,7 +26,8 @@ class ProcessResult:
 def process_document(
     input_path: Path,
     output_dir: Path,
-    ocr_engine: Optional[OCREngine] = None
+    ocr_engine: Optional[OCREngine] = None,
+    max_images: Optional[int] = None
 ) -> ProcessResult:
     """Process a single Word document.
 
@@ -34,6 +35,7 @@ def process_document(
         input_path: Path to .docx file
         output_dir: Directory for output files
         ocr_engine: OCR engine to use (defaults to Tesseract)
+        max_images: Maximum number of images to process (None for all)
 
     Returns:
         ProcessResult with status and output paths
@@ -48,6 +50,10 @@ def process_document(
         # Extract images
         extractor = ImageExtractor()
         extracted = extractor.extract(input_path)
+
+        # Apply limit if set
+        if max_images is not None:
+            extracted = extracted[:max_images]
 
         # OCR each image
         processed = []
