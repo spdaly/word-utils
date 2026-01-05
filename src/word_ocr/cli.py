@@ -45,7 +45,13 @@ def check_tesseract() -> bool:
     default="tesseract",
     help="OCR engine to use (default: tesseract)"
 )
-def main(input_pattern: str, output: str, verbose: bool, dry_run: bool, engine: str):
+@click.option(
+    "--max-images",
+    type=int,
+    default=None,
+    help="Maximum images to process per document"
+)
+def main(input_pattern: str, output: str, verbose: bool, dry_run: bool, engine: str, max_images: int):
     """Extract images from Word documents and OCR to Markdown.
 
     INPUT_PATTERN can be a single file or glob pattern (e.g., "docs/*.docx")
@@ -110,7 +116,8 @@ def main(input_pattern: str, output: str, verbose: bool, dry_run: bool, engine: 
         result = process_document(
             input_path=file_path,
             output_dir=output_dir,
-            ocr_engine=ocr_engine
+            ocr_engine=ocr_engine,
+            max_images=max_images
         )
 
         if result.success:
