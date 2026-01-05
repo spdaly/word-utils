@@ -102,3 +102,44 @@ class TestGeminiOCR:
 
         assert engine.model == "gemini-1.5-pro"
         mock_model.assert_called_once_with("gemini-1.5-pro")
+
+    def test_extracts_text_from_pil_image(self, monkeypatch, mocker):
+        """Should extract text from PIL Image."""
+        monkeypatch.setenv("GEMINI_API_KEY", "test-key")
+        mocker.patch("google.generativeai.configure")
+
+        mock_response = mocker.Mock()
+        mock_response.text = "Extracted text from image"
+        mock_client = mocker.Mock()
+        mock_client.generate_content.return_value = mock_response
+        mocker.patch("google.generativeai.GenerativeModel", return_value=mock_client)
+
+        engine = GeminiOCR()
+        image = Image.new('RGB', (100, 100), color='white')
+        result = engine.extract_text(image)
+
+        assert result == "Extracted text from image"
+        mock_client.generate_content.assert_called_once()
+        call_args = mock_client.generate_content.call_args[0][0]
+        assert call_args[0] == GeminiOCR.PROMPT
+        assert call_args[1] == image
+
+    def test_extracts_text_from_path(self, monkeypatch, mocker, tmp_path):
+        """Should extract text from image path."""
+        monkeypatch.setenv("GEMINI_API_KEY", "test-key")
+        mocker.patch("google.generativeai.configure")
+
+        mock_response = mocker.Mock()
+        mock_response.text = "Text from file"
+        mock_client = mocker.Mock()
+        mock_client.generate_content.return_value = mock_response
+        mocker.patch("google.generativeai.GenerativeModel", return_value=mock_client)
+
+        # Create test image file
+        img_path = tmp_path / "test.png"
+        Image.new('RGB', (100, 100), color='blue').save(img_path)
+
+        engine = GeminiOCR()
+        result = engine.extract_text(img_path)
+
+        assert result == "Text from file"
