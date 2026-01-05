@@ -6,7 +6,7 @@ from pathlib import Path
 from PIL import Image
 import io
 
-from word_ocr.ocr import OCREngine, TesseractOCR
+from word_ocr.ocr import OCREngine, TesseractOCR, GeminiOCR
 
 
 class TestOCREngine:
@@ -49,3 +49,34 @@ class TestOCREngine:
         """OCREngine base class should not be instantiable."""
         with pytest.raises(TypeError):
             OCREngine()
+
+
+class TestGeminiOCR:
+    """Test Gemini OCR engine."""
+
+    def test_raises_without_api_key(self, monkeypatch):
+        """Should raise ValueError if no API key configured."""
+        monkeypatch.delenv("GEMINI_API_KEY", raising=False)
+        monkeypatch.delenv("GOOGLE_API_KEY", raising=False)
+
+        with pytest.raises(ValueError, match="API key not found"):
+            GeminiOCR()
+
+    def test_accepts_gemini_api_key(self, monkeypatch, mocker):
+        """Should use GEMINI_API_KEY env var."""
+        monkeypatch.setenv("GEMINI_API_KEY", "test-key-123")
+        mocker.patch("google.generativeai.configure")
+        mocker.patch("google.generativeai.GenerativeModel")
+
+        engine = GeminiOCR()
+        assert engine.api_key == "test-key-123"
+
+    def test_falls_back_to_google_api_key(self, monkeypatch, mocker):
+        """Should fall back to GOOGLE_API_KEY."""
+        monkeypatch.delenv("GEMINI_API_KEY", raising=False)
+        monkeypatch.setenv("GOOGLE_API_KEY", "fallback-key")
+        mocker.patch("google.generativeai.configure")
+        mocker.patch("google.generativeai.GenerativeModel")
+
+        engine = GeminiOCR()
+        assert engine.api_key == "fallback-key"
