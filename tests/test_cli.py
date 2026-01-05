@@ -209,3 +209,30 @@ class TestMaxImagesOption:
         mock_process.assert_called_once()
         call_kwargs = mock_process.call_args[1]
         assert call_kwargs['max_images'] == 2
+
+    def test_verbose_shows_limited_count(self, tmp_path, mocker):
+        """Should show 'X of Y images, limited' in verbose mode."""
+        docx_path = tmp_path / "test.docx"
+        docx_path.touch()
+
+        mock_process = mocker.patch('word_ocr.cli.process_document')
+        mock_process.return_value = mocker.Mock(
+            success=True,
+            markdown_path=tmp_path / "test.md",
+            image_count=2,
+            total_extracted=5
+        )
+        mocker.patch('word_ocr.cli.check_tesseract', return_value=True)
+
+        from click.testing import CliRunner
+        from word_ocr.cli import main
+
+        runner = CliRunner()
+        result = runner.invoke(main, [
+            str(docx_path),
+            '-o', str(tmp_path),
+            '--max-images', '2',
+            '-v'
+        ])
+
+        assert "2 of 5 images, limited" in result.output

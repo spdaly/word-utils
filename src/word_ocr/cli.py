@@ -123,7 +123,10 @@ def main(input_pattern: str, output: str, verbose: bool, dry_run: bool, engine: 
         if result.success:
             successes += 1
             if verbose:
-                click.echo(f"  -> {result.markdown_path.name} ({result.image_count} images)")
+                if result.total_extracted > result.image_count:
+                    click.echo(f"  -> {result.markdown_path.name} ({result.image_count} of {result.total_extracted} images, limited)")
+                else:
+                    click.echo(f"  -> {result.markdown_path.name} ({result.image_count} images)")
         else:
             failures += 1
             click.echo(f"Error processing {file_name}: {result.error}", err=True)
