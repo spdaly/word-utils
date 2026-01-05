@@ -132,6 +132,7 @@ word-ocr "./docs/*.docx" --dry-run
 ```
 
 **Exit codes:**
+
 - `0` - Success
 - `1` - Partial failure (some documents failed, others succeeded)
 - `2` - Complete failure (no documents processed)
@@ -232,6 +233,7 @@ dev = ["pytest>=8.0.0", "pytest-cov>=4.0.0"]
 ### System requirement
 
 Tesseract must be installed separately:
+
 - macOS: `brew install tesseract`
 - Linux: `apt install tesseract-ocr`
 

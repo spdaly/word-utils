@@ -1,0 +1,26 @@
+{
+  "permissions": {
+    "allow": [
+      "Skill(superpowers:brainstorming)",
+      "Bash(mkdir:*)",
+      "Bash(git init:*)",
+      "Bash(git add:*)",
+      "Bash(git commit:*)",
+      "Skill(superpowers:using-git-worktrees)",
+      "Bash(git check-ignore:*)",
+      "Bash(git worktree:*)",
+      "Skill(superpowers:writing-plans)",
+      "Skill(superpowers:subagent-driven-development)",
+      "Bash(uv pip install:*)",
+      "Bash(uv run python:*)",
+      "Bash(cat:*)",
+      "Bash(git -C /Users/spdaly/projects/word-utils/.worktrees/word-ocr show fb128e8 --name-only)",
+      "Bash(uv run pytest:*)",
+      "Bash(python -c:*)",
+      "Skill(superpowers:finishing-a-development-branch)",
+      "Bash(git checkout:*)",
+      "Bash(git merge:*)",
+      "Bash(git branch:*)"
+    ]
+  }
+}
