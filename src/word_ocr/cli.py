@@ -9,6 +9,7 @@ from pathlib import Path
 import click
 
 from .processor import process_document
+from .ocr import TesseractOCR, GeminiOCR
 
 
 def check_tesseract() -> bool:
@@ -34,18 +35,17 @@ def check_tesseract() -> bool:
     is_flag=True,
     help="List files that would be processed without processing"
 )
-def main(input_pattern: str, output: str, verbose: bool, dry_run: bool):
+@click.option(
+    "--engine",
+    type=click.Choice(["tesseract", "gemini", "gemini-pro"]),
+    default="tesseract",
+    help="OCR engine to use (default: tesseract)"
+)
+def main(input_pattern: str, output: str, verbose: bool, dry_run: bool, engine: str):
     """Extract images from Word documents and OCR to Markdown.
 
     INPUT_PATTERN can be a single file or glob pattern (e.g., "docs/*.docx")
     """
-    # Check Tesseract is available
-    if not check_tesseract():
-        click.echo("Error: Tesseract is not installed.", err=True)
-        click.echo("Install with: brew install tesseract (macOS)", err=True)
-        click.echo("             apt install tesseract-ocr (Linux)", err=True)
-        sys.exit(2)
-
     # Find matching files
     files = glob(input_pattern)
     if not files:
@@ -64,6 +64,27 @@ def main(input_pattern: str, output: str, verbose: bool, dry_run: bool):
         click.echo(f"\nTotal: {len(files)} file(s)")
         return
 
+    # Select OCR engine
+    if engine == "tesseract":
+        if not check_tesseract():
+            click.echo("Error: Tesseract is not installed.", err=True)
+            click.echo("Install with: brew install tesseract (macOS)", err=True)
+            click.echo("             apt install tesseract-ocr (Linux)", err=True)
+            sys.exit(2)
+        ocr_engine = TesseractOCR()
+    elif engine == "gemini":
+        try:
+            ocr_engine = GeminiOCR()
+        except ValueError as e:
+            click.echo(f"Error: {e}", err=True)
+            sys.exit(2)
+    elif engine == "gemini-pro":
+        try:
+            ocr_engine = GeminiOCR(model="gemini-1.5-pro")
+        except ValueError as e:
+            click.echo(f"Error: {e}", err=True)
+            sys.exit(2)
+
     # Process files
     output_dir = Path(output)
     total = len(files)
@@ -78,7 +99,8 @@ def main(input_pattern: str, output: str, verbose: bool, dry_run: bool):
 
         result = process_document(
             input_path=file_path,
-            output_dir=output_dir
+            output_dir=output_dir,
+            ocr_engine=ocr_engine
         )
 
         if result.success:
