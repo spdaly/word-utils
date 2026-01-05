@@ -70,6 +70,24 @@ class TestProcessDocument:
 
         assert result.image_count == 2
 
+    def test_no_max_images_processes_all(self, tmp_path, sample_docx_with_images):
+        """Should process all images when max_images is not set."""
+        from unittest.mock import Mock, patch
+
+        mock_images = [Mock(image=Mock(), index=i) for i in range(5)]
+
+        with patch('word_ocr.processor.ImageExtractor') as mock_extractor:
+            mock_extractor.return_value.extract.return_value = mock_images
+            with patch('word_ocr.processor.TesseractOCR') as mock_ocr:
+                mock_ocr.return_value.extract_text.return_value = "text"
+
+                result = process_document(
+                    input_path=sample_docx_with_images,
+                    output_dir=tmp_path
+                )
+
+        assert result.image_count == 5
+
 
 class TestProcessBatch:
     """Test batch document processing."""
