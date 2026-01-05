@@ -51,6 +51,28 @@ word-ocr "./docs/*.docx" -o ./output --dry-run
 - `1` - Some files failed
 - `2` - All files failed or Tesseract not installed
 
+### OCR Engines
+
+**Tesseract (default)** - Local processing, free, requires Tesseract installed
+
+```bash
+word-ocr document.docx -o ./output
+word-ocr document.docx -o ./output --engine tesseract
+```
+
+**Gemini** - Cloud-based, better accuracy for complex documents, requires API key
+
+```bash
+export GEMINI_API_KEY="your-api-key"
+word-ocr document.docx -o ./output --engine gemini
+```
+
+**Gemini Pro** - Higher capability model for difficult documents
+
+```bash
+word-ocr document.docx -o ./output --engine gemini-pro
+```
+
 ### Library
 
 ```python
@@ -73,8 +95,9 @@ for r in results:
 ### Custom OCR Engine
 
 ```python
-from word_ocr import process_document, OCREngine
+from word_ocr import process_document, OCREngine, GeminiOCR
 
+# Use a custom OCR engine
 class MyOCREngine(OCREngine):
     def extract_text(self, image):
         # Your OCR implementation
@@ -85,6 +108,14 @@ result = process_document(
     output_dir="./output",
     ocr_engine=MyOCREngine()
 )
+
+# Use Gemini for better accuracy
+engine = GeminiOCR()
+result = process_document("report.docx", output_dir="./output", ocr_engine=engine)
+
+# Use Gemini Pro for complex documents
+engine = GeminiOCR(model="gemini-1.5-pro")
+result = process_document("scanned.docx", output_dir="./output", ocr_engine=engine)
 ```
 
 ## Output Format
