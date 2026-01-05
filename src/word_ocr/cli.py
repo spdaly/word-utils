@@ -7,9 +7,13 @@ from glob import glob
 from pathlib import Path
 
 import click
+from dotenv import load_dotenv
 
 from .processor import process_document
 from .ocr import TesseractOCR, GeminiOCR
+
+# Load environment variables from .env file
+load_dotenv()
 
 
 def check_tesseract() -> bool:

@@ -63,7 +63,13 @@ word-ocr document.docx -o ./output --engine tesseract
 **Gemini** - Cloud-based, better accuracy for complex documents, requires API key
 
 ```bash
+# Option 1: Use .env file (recommended)
+cp .env.example .env
+# Edit .env and add your GEMINI_API_KEY
+
+# Option 2: Export environment variable
 export GEMINI_API_KEY="your-api-key"
+
 word-ocr document.docx -o ./output --engine gemini
 ```
 
