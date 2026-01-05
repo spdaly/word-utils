@@ -6,7 +6,7 @@ from pathlib import Path
 from PIL import Image
 import io
 
-from word_ocr.ocr import OCREngine, TesseractOCR
+from word_ocr.ocr import OCREngine, TesseractOCR, GeminiOCR
 
 
 class TestOCREngine:
@@ -49,3 +49,97 @@ class TestOCREngine:
         """OCREngine base class should not be instantiable."""
         with pytest.raises(TypeError):
             OCREngine()
+
+
+class TestGeminiOCR:
+    """Test Gemini OCR engine."""
+
+    def test_raises_without_api_key(self, monkeypatch):
+        """Should raise ValueError if no API key configured."""
+        monkeypatch.delenv("GEMINI_API_KEY", raising=False)
+        monkeypatch.delenv("GOOGLE_API_KEY", raising=False)
+
+        with pytest.raises(ValueError, match="API key not found"):
+            GeminiOCR()
+
+    def test_accepts_gemini_api_key(self, monkeypatch, mocker):
+        """Should use GEMINI_API_KEY env var."""
+        monkeypatch.setenv("GEMINI_API_KEY", "test-key-123")
+        mocker.patch("google.generativeai.configure")
+        mocker.patch("google.generativeai.GenerativeModel")
+
+        engine = GeminiOCR()
+        assert engine.api_key == "test-key-123"
+
+    def test_falls_back_to_google_api_key(self, monkeypatch, mocker):
+        """Should fall back to GOOGLE_API_KEY."""
+        monkeypatch.delenv("GEMINI_API_KEY", raising=False)
+        monkeypatch.setenv("GOOGLE_API_KEY", "fallback-key")
+        mocker.patch("google.generativeai.configure")
+        mocker.patch("google.generativeai.GenerativeModel")
+
+        engine = GeminiOCR()
+        assert engine.api_key == "fallback-key"
+
+    def test_default_model_is_flash(self, monkeypatch, mocker):
+        """Should default to gemini-1.5-flash."""
+        monkeypatch.setenv("GEMINI_API_KEY", "test-key")
+        mocker.patch("google.generativeai.configure")
+        mock_model = mocker.patch("google.generativeai.GenerativeModel")
+
+        engine = GeminiOCR()
+
+        assert engine.model == "gemini-1.5-flash"
+        mock_model.assert_called_once_with("gemini-1.5-flash")
+
+    def test_uses_custom_model(self, monkeypatch, mocker):
+        """Should use specified model."""
+        monkeypatch.setenv("GEMINI_API_KEY", "test-key")
+        mocker.patch("google.generativeai.configure")
+        mock_model = mocker.patch("google.generativeai.GenerativeModel")
+
+        engine = GeminiOCR(model="gemini-1.5-pro")
+
+        assert engine.model == "gemini-1.5-pro"
+        mock_model.assert_called_once_with("gemini-1.5-pro")
+
+    def test_extracts_text_from_pil_image(self, monkeypatch, mocker):
+        """Should extract text from PIL Image."""
+        monkeypatch.setenv("GEMINI_API_KEY", "test-key")
+        mocker.patch("google.generativeai.configure")
+
+        mock_response = mocker.Mock()
+        mock_response.text = "Extracted text from image"
+        mock_client = mocker.Mock()
+        mock_client.generate_content.return_value = mock_response
+        mocker.patch("google.generativeai.GenerativeModel", return_value=mock_client)
+
+        engine = GeminiOCR()
+        image = Image.new('RGB', (100, 100), color='white')
+        result = engine.extract_text(image)
+
+        assert result == "Extracted text from image"
+        mock_client.generate_content.assert_called_once()
+        call_args = mock_client.generate_content.call_args[0][0]
+        assert call_args[0] == GeminiOCR.PROMPT
+        assert call_args[1] == image
+
+    def test_extracts_text_from_path(self, monkeypatch, mocker, tmp_path):
+        """Should extract text from image path."""
+        monkeypatch.setenv("GEMINI_API_KEY", "test-key")
+        mocker.patch("google.generativeai.configure")
+
+        mock_response = mocker.Mock()
+        mock_response.text = "Text from file"
+        mock_client = mocker.Mock()
+        mock_client.generate_content.return_value = mock_response
+        mocker.patch("google.generativeai.GenerativeModel", return_value=mock_client)
+
+        # Create test image file
+        img_path = tmp_path / "test.png"
+        Image.new('RGB', (100, 100), color='blue').save(img_path)
+
+        engine = GeminiOCR()
+        result = engine.extract_text(img_path)
+
+        assert result == "Text from file"

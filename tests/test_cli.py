@@ -115,7 +115,7 @@ class TestCLI:
 
         assert result.exit_code == 2
 
-    def test_checks_tesseract_availability(self, tmp_path, monkeypatch):
+    def test_checks_tesseract_availability(self, sample_docx_with_images, tmp_path, monkeypatch):
         """CLI should error if Tesseract not installed."""
         runner = CliRunner()
 
@@ -123,9 +123,55 @@ class TestCLI:
         monkeypatch.setattr("shutil.which", lambda x: None)
 
         result = runner.invoke(main, [
-            "test.docx",
+            str(sample_docx_with_images),
             "-o", str(tmp_path)
         ])
 
         assert result.exit_code != 0
         assert "tesseract" in result.output.lower()
+
+
+class TestEngineOption:
+    """Test --engine CLI option."""
+
+    def test_default_engine_is_tesseract(self, sample_docx_with_images, tmp_path):
+        """Should use Tesseract by default."""
+        runner = CliRunner()
+        output_dir = tmp_path / "output"
+
+        result = runner.invoke(main, [
+            str(sample_docx_with_images),
+            "-o", str(output_dir)
+        ])
+
+        assert result.exit_code == 0
+
+    def test_engine_gemini_requires_api_key(self, sample_docx_with_images, tmp_path, monkeypatch):
+        """Should fail if Gemini selected without API key."""
+        monkeypatch.delenv("GEMINI_API_KEY", raising=False)
+        monkeypatch.delenv("GOOGLE_API_KEY", raising=False)
+
+        runner = CliRunner()
+        output_dir = tmp_path / "output"
+
+        result = runner.invoke(main, [
+            str(sample_docx_with_images),
+            "-o", str(output_dir),
+            "--engine", "gemini"
+        ])
+
+        assert result.exit_code != 0
+        assert "API key" in result.output or "API key" in str(result.exception)
+
+    def test_engine_choice_validation(self, tmp_path):
+        """Should reject invalid engine choice."""
+        runner = CliRunner()
+
+        result = runner.invoke(main, [
+            "test.docx",
+            "-o", str(tmp_path),
+            "--engine", "invalid"
+        ])
+
+        assert result.exit_code != 0
+        assert "Invalid value" in result.output
