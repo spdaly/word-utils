@@ -15,6 +15,7 @@ class ProcessedImage:
     image: Image.Image
     index: int
     ocr_text: Optional[str]
+    ocr_error: Optional[str] = None
 
 
 @dataclass

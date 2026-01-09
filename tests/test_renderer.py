@@ -105,3 +105,26 @@ class TestMarkdownRenderer:
 
         content = result.markdown_path.read_text()
         assert "[OCR failed for this image]" in content
+
+    def test_shows_ocr_error_message(self, tmp_path):
+        """Renderer should show actual error message when OCR fails."""
+        renderer = MarkdownRenderer()
+        output_dir = tmp_path / "output"
+
+        images = [
+            ProcessedImage(
+                image=Image.new('RGB', (100, 100), 'red'),
+                index=1,
+                ocr_text=None,
+                ocr_error="API key not valid. Please pass a valid API key."
+            )
+        ]
+
+        result = renderer.render(
+            images=images,
+            source_name="test.docx",
+            output_dir=output_dir
+        )
+
+        content = result.markdown_path.read_text()
+        assert "[OCR failed: API key not valid. Please pass a valid API key.]" in content

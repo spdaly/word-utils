@@ -20,7 +20,19 @@
       "Skill(superpowers:finishing-a-development-branch)",
       "Bash(git checkout:*)",
       "Bash(git merge:*)",
-      "Bash(git branch:*)"
+      "Bash(git branch:*)",
+      "Bash(uv pip show:*)",
+      "Bash(git show:*)",
+      "Bash(git merge-base:*)",
+      "Bash(gh pr create:*)",
+      "Bash(git pull:*)",
+      "Bash(gh issue create:*)",
+      "Bash(gh issue view:*)",
+      "Bash(gh issue close:*)",
+      "Bash(git push:*)",
+      "WebFetch(domain:ai.google.dev)",
+      "Bash(uv venv:*)",
+      "Bash(uv sync:*)"
     ]
   }
 }
